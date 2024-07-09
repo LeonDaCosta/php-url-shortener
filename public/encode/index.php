@@ -1,0 +1,53 @@
+<?php
+    require __DIR__ . '/../../vendor/autoload.php';
+
+    include_once '../../config/Database.php';
+
+    use Hashids\Hashids;
+
+    header('Content-Type: application/json; charset=utf-8');
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Methods: POST');
+
+    function validUrl($url) {
+        if(is_string($url)) return true;
+
+        return false;
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+        $postData = array_merge($_POST, (array) json_decode(file_get_contents('php://input'), true));
+           
+		if(isset($postData['url'])) {
+            // Validate url
+			if(validUrl($postData['url'])) {
+                // Create database
+                $db = new Database();
+                // Connect to database
+                $db->connect();
+                // Create the record and get the ID to hash
+                $id = $db->createRecord();
+
+                $hashids = new Hashids('shorturl',6);
+                // Hashes the database ID
+                $hash = $hashids->encode($id);
+
+                $hashid = $hashids->decode($hash)[0];
+                $db->updateRecord($id, $postData['url']);
+                $db->closeConnection();
+                $shortUrl = "http://short.est/$hash";
+			echo json_encode(array('original_url' => $postData['url'], 'short_url' => $shortUrl ));
+			} else {
+                header('HTTP/1.1 400 Bad Request', true, 400);
+                echo json_encode(array('message' => "Error: Bad Request, invalid URL"));
+			}
+		} else {
+            header('HTTP/1.1 400 Bad Request', true, 400);
+            echo json_encode(array('message' => "Error: Bad Request, URL is missing!"));
+		}
+	} else {
+        header('HTTP/1.1 405 Method Not Allowed', true, 405);
+		echo json_encode(array('message' => "Error: " . $_SERVER['REQUEST_METHOD'] . 'Method Not Allowed '));
+	}
+?>

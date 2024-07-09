@@ -1,0 +1,12 @@
+{
+    "name": "leon/shorturl",
+    "authors": [
+        {
+            "name": "Leon Da Costa",
+            "email": "leon@dacosta.me"
+        }
+    ],
+    "require": {
+        "hashids/hashids": "4.1.0"
+    }
+}
